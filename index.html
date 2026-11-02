@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -146,12 +147,7 @@
   }
   [data-theme="dark"] .month-event-text { color: #93c5fd; background: rgba(59, 130, 246, 0.25); }
 
-  .weather-btn {
-      position: absolute; bottom: 2px; right: 2px; background: rgba(59, 130, 246, 0.2);
-      border: 1px solid #3b82f6; border-radius: 4px; font-size: 9px; padding: 1px 3px;
-      color: #2563eb; font-weight: bold; cursor: pointer; z-index: 10;
-  }
-  [data-theme="dark"] .weather-btn { color: #60a5fa; border-color: #60a5fa; }
+  .mobile-text { display: none; }
 
   .bottom-bar { 
     position: fixed; bottom: 0; left: 0; right: 0; background: var(--cal-bg); border-top: 1px solid var(--border-color);
@@ -203,8 +199,8 @@
   .modal.active { display: flex; animation: fadeIn 0.2s; }
   .modal-content { background: var(--cal-bg); padding: 25px; border-radius: 20px 20px 0 0; width: 100%; max-width: 600px; box-shadow: 0 -10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; padding-bottom: max(25px, env(safe-area-inset-bottom)); animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
   
-  #day-modal, #weather-modal { align-items: center; padding: 20px; }
-  #day-modal .modal-content, #weather-modal .modal-content { border-radius: 16px; padding: 20px; max-height: 85vh; padding-bottom: 20px; animation: scaleIn 0.2s cubic-bezier(0.4, 0, 0.2, 1); display:flex; flex-direction:column; width: 100%; max-width: 400px;} 
+  #day-modal { align-items: center; padding: 20px; }
+  #day-modal .modal-content { border-radius: 16px; padding: 20px; max-height: 85vh; padding-bottom: 20px; animation: scaleIn 0.2s cubic-bezier(0.4, 0, 0.2, 1); display:flex; flex-direction:column; width: 100%; max-width: 400px;} 
   
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -227,13 +223,8 @@
   .event-card h4 { margin: 0 0 4px 0; font-size: 15px; }
   .event-card p { margin: 0; font-size: 13px; color: var(--muted); }
 
-  /* WEATHER MODAL */
-  .weather-widget { background: linear-gradient(135deg, #60a5fa, #3b82f6); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
-  .weather-icon { font-size: 48px; margin: 10px 0; }
-  .weather-temp { font-size: 32px; font-weight: bold; }
-  .weather-desc { font-size: 16px; margin-bottom: 10px; text-transform: capitalize; }
-  .weather-details { display: flex; justify-content: space-around; font-size: 12px; background: rgba(0,0,0,0.1); padding: 10px; border-radius: 8px; }
-  .weather-location { font-size: 12px; font-weight: bold; margin-top: 10px; opacity: 0.9; }
+  .btn-danger { background: #ef4444 !important; color: white !important; border: none !important; }
+  .btn-danger:hover { background: #dc2626 !important; }
 
   @media (max-width: 600px) {
     .calendar-header { grid-template-columns: 20px repeat(7, minmax(0, 1fr)); font-size: 12px; }
@@ -296,12 +287,15 @@
 
 <div class="bottom-bar" id="palette-bar"></div>
 
-<!-- MODAL INFO DEL DÍA -->
+<!-- MODAL INFO DEL DÍA (Pop-up central) -->
 <div class="modal" id="day-modal" onclick="if(event.target===this) closeDayModal()">
   <div class="modal-content" style="flex-grow:1; display:flex; flex-direction:column; max-height:85vh;">
     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px; flex-shrink:0;">
-        <h2 id="day-modal-title" style="margin:0;">1 Noviembre 2026</h2>
-        <button onclick="closeDayModal()" style="background:var(--bg-color); border:none; width:36px; height:36px; border-radius:50%; font-size:16px;">✖</button>
+        <h2 id="day-modal-title" style="margin:0; font-size:18px;">1 Noviembre 2026</h2>
+        <div style="display:flex; gap:10px;">
+            <button id="btn-weather" onclick="showWeatherForSelectedDay()" style="background:#3b82f6; color:white; border:none; padding:6px 12px; border-radius:8px; font-size:13px; cursor:pointer; font-weight:bold; display:flex; align-items:center; gap:5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">🌤️ Tiempo</button>
+            <button onclick="closeDayModal()" style="background:var(--bg-color); border:none; width:36px; height:36px; border-radius:50%; font-size:16px;">✖</button>
+        </div>
     </div>
     
     <div style="overflow-y:auto; flex-grow:1; padding-right:5px;">
@@ -340,31 +334,33 @@
   </div>
 </div>
 
-<!-- MODAL DEL CLIMA -->
+
+<!-- MODAL DE TIEMPO -->
 <div class="modal" id="weather-modal" onclick="if(event.target===this) closeWeatherModal()">
-  <div class="modal-content">
+  <div class="modal-content" style="max-width: 400px; text-align: center; padding: 25px 20px;">
     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">
-        <h2 id="weather-modal-title" style="margin:0;">El Tiempo</h2>
+        <h2 style="margin:0; font-size:18px;">🌤️ Consulta del Tiempo</h2>
         <button onclick="closeWeatherModal()" style="background:var(--bg-color); border:none; width:36px; height:36px; border-radius:50%; font-size:16px;">✖</button>
     </div>
-    
-    <div class="weather-widget" id="weather-widget-content">
-        <!-- Contenido dinámico del clima -->
-        <p>Cargando previsión para tu ubicación...</p>
+    <div id="weather-content" style="min-height: 150px; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+        <p style="color:var(--muted); font-weight:bold;">📍 Obteniendo ubicación y pronóstico...</p>
     </div>
-    <p style="text-align:center; font-size:10px; color:var(--muted); margin:0; margin-top:10px;">Fuente: Open-Meteo API</p>
+    <button onclick="refreshWeather()" style="width:100%; background:#3b82f6; color:white; padding:14px; margin-top:15px; border:none; border-radius:8px; font-weight:bold; font-size: 16px; display:flex; justify-content:center; align-items:center; gap:8px;">
+        🔄 Actualizar en vivo
+    </button>
   </div>
 </div>
-
-
 <!-- MODAL DE CONFIGURACIÓN DE TURNOS -->
 <div class="modal" id="config-modal" onclick="if(event.target===this) closeConfig()">
   <div class="modal-content">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <h2 style="margin:0;">Turnos</h2>
+        <h2 style="margin:0;">Configuración general</h2>
         <button onclick="closeConfig()" style="background:var(--bg-color); border:none; width:36px; height:36px; border-radius:50%; font-size:16px;">✖</button>
     </div>
     
+    <button onclick="clearCalendar()" class="btn-danger" style="width: 100%; padding: 15px; font-size: 16px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);">🗑️ LIMPIAR CALENDARIO (Borrar todo)</button>
+
+    <h3 style="font-size: 16px; margin-bottom: 15px;">Tus Turnos</h3>
     <div id="shifts-list" style="margin-bottom: 20px; max-height: 30vh; overflow-y: auto; padding-right:5px;"></div>
     
     <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
@@ -406,86 +402,7 @@
     });
   }
 
-  let liveWeatherData = {};
-  let currentCityName = "Tu ubicación";
-
-  const weatherCodeMap = {
-      0: { desc: "Despejado", icon: "☀️" },
-      1: { desc: "Mayormente despejado", icon: "🌤️" },
-      2: { desc: "Parcialmente nublado", icon: "⛅" },
-      3: { desc: "Nublado", icon: "☁️" },
-      45: { desc: "Niebla", icon: "🌫️" },
-      48: { desc: "Niebla escarcha", icon: "🌫️" },
-      51: { desc: "Llovizna ligera", icon: "🌦️" },
-      53: { desc: "Llovizna moderada", icon: "🌦️" },
-      55: { desc: "Llovizna densa", icon: "🌧️" },
-      61: { desc: "Lluvia ligera", icon: "🌧️" },
-      63: { desc: "Lluvia moderada", icon: "🌧️" },
-      65: { desc: "Lluvia fuerte", icon: "🌧️" },
-      71: { desc: "Nieve ligera", icon: "❄️" },
-      73: { desc: "Nieve moderada", icon: "❄️" },
-      75: { desc: "Nieve fuerte", icon: "❄️" },
-      95: { desc: "Tormenta", icon: "⛈️" }
-  };
-
-  async function fetchCityName(lat, lon) {
-      try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
-          const data = await res.json();
-          if (data && data.address) {
-              return data.address.city || data.address.town || data.address.village || "Tu ubicación";
-          }
-      } catch (e) {
-          console.error("Error obteniendo nombre de ciudad", e);
-      }
-      return "Tu ubicación";
-  }
-
-  async function fetchWeather(lat = 40.63, lon = -3.16) {
-      try {
-          const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max,windspeed_10m_max&timezone=Europe%2FMadrid`);
-          const data = await res.json();
-          liveWeatherData = {};
-          
-          currentCityName = await fetchCityName(lat, lon);
-
-          for(let i=0; i < data.daily.time.length; i++) {
-              const date = data.daily.time[i];
-              const code = data.daily.weathercode[i];
-              const mapped = weatherCodeMap[code] || { desc: "Variable", icon: "⛅" };
-              liveWeatherData[date] = {
-                  temp: `${Math.round(data.daily.temperature_2m_max[i])}° / ${Math.round(data.daily.temperature_2m_min[i])}°`,
-                  desc: mapped.desc,
-                  icon: mapped.icon,
-                  rain: `${data.daily.precipitation_probability_max[i]}%`,
-                  wind: `${Math.round(data.daily.windspeed_10m_max[i])} km/h`
-              };
-          }
-          if(currentView === 'month') renderCalendar();
-          if(document.getElementById('day-modal').classList.contains('active')) renderDayModalContent();
-          
-          if(document.getElementById('weather-modal').classList.contains('active')) {
-             const activeDate = document.getElementById('weather-modal').getAttribute('data-active-date');
-             if(activeDate) renderWeatherModalContent(activeDate);
-          }
-      } catch(e) {
-          console.error("Error obteniendo clima", e);
-      }
-  }
-
-  function getLocationAndWeather() {
-      if ("geolocation" in navigator) {
-          navigator.geolocation.getCurrentPosition(
-              (position) => fetchWeather(position.coords.latitude, position.coords.longitude),
-              (error) => fetchWeather() // Fallback a Guadalajara (context)
-          );
-      } else {
-          fetchWeather();
-      }
-  }
-
   let currentDate = new Date();
-  currentDate.setFullYear(2026, 10, 2); 
   let currentView = 'month'; 
   let activeShiftId = null;
   let selectedDay = new Date();
@@ -626,42 +543,6 @@
 
   const realTodayStr = formatDateStr(new Date());
 
-  function openWeatherModal(e, dateStr) {
-      if(e) e.stopPropagation(); 
-      document.getElementById('weather-modal').classList.add('active');
-      document.getElementById('weather-modal').setAttribute('data-active-date', dateStr);
-      
-      const parts = dateStr.split('-');
-      const d = new Date(parts[0], parts[1]-1, parts[2]);
-      document.getElementById('weather-modal-title').textContent = `${d.getDate()} ${monthNames[d.getMonth()]}`;
-      
-      renderWeatherModalContent(dateStr);
-  }
-  
-  function renderWeatherModalContent(dateStr) {
-      const data = liveWeatherData[dateStr];
-      const content = document.getElementById('weather-widget-content');
-      
-      if(data) {
-          content.innerHTML = `
-              <div class="weather-icon">${data.icon}</div>
-              <div class="weather-temp">${data.temp}</div>
-              <div class="weather-desc">${data.desc}</div>
-              <div class="weather-location" style="color: rgba(255,255,255,0.8);">📍 ${currentCityName}</div>
-              <div class="weather-details" style="margin-top:15px;">
-                  <div>💧 Precip: ${data.rain}</div>
-                  <div>💨 Viento: ${data.wind}</div>
-              </div>
-          `;
-      } else {
-           content.innerHTML = `<p>Cargando o previsión no disponible...</p>`;
-      }
-  }
-
-  function closeWeatherModal() {
-      document.getElementById('weather-modal').classList.remove('active');
-  }
-
   function renderCalendar() {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -695,12 +576,7 @@
           }
       };
 
-      let weatherBtnHtml = '';
-      if(liveWeatherData[dateStr]) {
-          weatherBtnHtml = `<div class="weather-btn" onclick="openWeatherModal(event, '${dateStr}')">${liveWeatherData[dateStr].icon}</div>`;
-      }
-
-      dayEl.innerHTML = `<div style="width:100%;"><div class="date-num">${d.getDate()}</div></div>${weatherBtnHtml}`;
+      dayEl.innerHTML = `<div style="width:100%;"><div class="date-num">${d.getDate()}</div></div>`;
 
       if (assignedShifts[dateStr]) {
         assignedShifts[dateStr].forEach(sId => {
@@ -773,17 +649,7 @@
       } else {
           htmlEvents = '<p style="color: var(--muted); font-size: 14px;">No hay eventos para este día.</p>';
       }
-      
-      let weatherBtnHtml = '';
-      if (liveWeatherData[dateStr]) {
-          weatherBtnHtml = `
-          <div style="display:flex; gap:10px; margin-top: 15px; margin-bottom: 5px;">
-              <button onclick="openWeatherModal(event, '${dateStr}')" style="flex:1; background: #3b82f6; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size:14px;">⛅ Ver Tiempo en ${currentCityName}</button>
-              <button onclick="getLocationAndWeather()" style="background: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; font-size:16px;" title="Actualizar ubicación y tiempo">🔄</button>
-          </div>`;
-      }
-      
-      eventsList.innerHTML = htmlEvents + weatherBtnHtml;
+      eventsList.innerHTML = htmlEvents;
   }
 
   let yearScrollTimeout;
@@ -996,6 +862,17 @@
       }
   }
 
+  function clearCalendar() {
+      if(confirm('⚠️ ¿Estás seguro de que quieres BORRAR TODOS los turnos y eventos asignados en tu calendario? Esta acción no se puede deshacer.')) {
+          assignedShifts = {};
+          calEvents = {};
+          saveData();
+          renderCalendar();
+          closeConfig();
+          alert("Calendario limpiado correctamente.");
+      }
+  }
+
   function toggleShiftOnDate(dateStr) {
     if (!activeShiftId) return;
     if (!assignedShifts[dateStr]) assignedShifts[dateStr] = [];
@@ -1138,8 +1015,111 @@
   updateHeader();
   renderPalette();
   
-  // INIT
-  getLocationAndWeather();
+
+  // WEATHER LOGIC
+  function showWeatherForSelectedDay() {
+      document.getElementById('weather-modal').classList.add('active');
+      refreshWeather();
+  }
+  function closeWeatherModal() {
+      document.getElementById('weather-modal').classList.remove('active');
+  }
+  function refreshWeather() {
+      document.getElementById('weather-content').innerHTML = '<p style="color:var(--muted); font-weight:bold;">📍 Buscando ubicación y pronóstico en vivo...</p>';
+      fetchWeather();
+  }
+  function fetchWeather() {
+      if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+              (position) => getWeatherData(position.coords.latitude, position.coords.longitude),
+              (error) => getWeatherData(40.63, -3.16, 'Guadalajara, España (Predeterminado)') // Coordenadas de Guadalajara por defecto
+          );
+      } else {
+          getWeatherData(40.63, -3.16, 'Guadalajara, España (Predeterminado)');
+      }
+  }
+  async function getWeatherData(lat, lon, defaultLocName = null) {
+      const dateStr = formatDateStr(selectedDay);
+      const contentDiv = document.getElementById('weather-content');
+      try {
+          let locName = defaultLocName;
+          if (!locName) {
+              try {
+                  const locRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=es`);
+                  const locData = await locRes.json();
+                  locName = locData.city || locData.locality || "Tu Ubicación";
+              } catch(e) { locName = "Ubicación detectada"; }
+          }
+          const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto`);
+          const data = await weatherRes.json();
+          const dates = data.daily.time;
+          const targetIdx = dates.indexOf(dateStr);
+          const todayIdx = dates.indexOf(formatDateStr(new Date()));
+          let html = `<h3 style="margin:0 0 10px 0; color:var(--muted); font-size:13px; text-transform:uppercase;">📍 ${locName}</h3>`;
+          if (targetIdx !== -1) {
+              const maxT = Math.round(data.daily.temperature_2m_max[targetIdx]);
+              const minT = Math.round(data.daily.temperature_2m_min[targetIdx]);
+              const code = data.daily.weathercode[targetIdx];
+              html += `
+                  <div style="background:var(--bg-color); padding:15px; border-radius:12px; margin-bottom:15px; width:100%;">
+                      <div style="font-size: 11px; font-weight:bold; color:var(--muted); text-transform:uppercase;">Día seleccionado (${dateStr.split('-').reverse().join('/')})</div>
+                      <div style="font-size: 60px; margin: 8px 0; text-shadow: 0 4px 10px rgba(0,0,0,0.05);">${getWeatherEmoji(code)}</div>
+                      <h2 style="margin: 5px 0; font-size: 20px;">${getWeatherDesc(code)}</h2>
+                      <p style="font-size: 16px; font-weight: bold; margin:0; margin-top:5px;">
+                          <span style="color: #ef4444;">Max: ${maxT}°C</span> &nbsp;|&nbsp; 
+                          <span style="color: #3b82f6;">Min: ${minT}°C</span>
+                      </p>
+                  </div>
+              `;
+          } else {
+              html += `<div style="background:var(--bg-color); padding:15px; border-radius:12px; margin-bottom:15px; width:100%;">
+                  <p style="margin:0; font-size:14px; font-weight:bold; color:var(--muted);">El pronóstico para este día no está disponible en la API.</p>
+              </div>`;
+          }
+          if (todayIdx !== -1) {
+              html += `<div style="width:100%; text-align:left; font-size:12px; font-weight:bold; margin-bottom:8px; color:var(--muted); text-transform:uppercase;">Próximos 5 días:</div>
+                       <div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:10px; scrollbar-width:none; width:100%;">`;
+              for(let i = todayIdx + 1; i <= todayIdx + 5 && i < dates.length; i++) {
+                  const dParts = dates[i].split('-');
+                  const maxT = Math.round(data.daily.temperature_2m_max[i]);
+                  const minT = Math.round(data.daily.temperature_2m_min[i]);
+                  const code = data.daily.weathercode[i];
+                  html += `
+                      <div style="flex: 0 0 auto; width: 65px; background:var(--bg-color); border-radius:10px; padding:10px 5px; text-align:center; box-shadow:inset 0 2px 4px rgba(0,0,0,0.02);">
+                          <div style="font-size:11px; color:var(--muted); font-weight:bold;">${dParts[2]}/${dParts[1]}</div>
+                          <div style="font-size:24px; margin:5px 0;">${getWeatherEmoji(code)}</div>
+                          <div style="font-size:12px; font-weight:bold;"><span style="color:#ef4444">${maxT}°</span> <span style="color:#3b82f6">${minT}°</span></div>
+                      </div>
+                  `;
+              }
+              html += `</div>`;
+          }
+          contentDiv.innerHTML = html;
+      } catch(e) {
+          contentDiv.innerHTML = '<p style="color:#ef4444; font-weight:bold;">Error de red al obtener datos en vivo.</p>';
+      }
+  }
+  function getWeatherEmoji(code) {
+      if (code === 0) return '☀️';
+      if (code >= 1 && code <= 3) return '⛅';
+      if (code >= 45 && code <= 48) return '🌫️';
+      if (code >= 51 && code <= 67) return '🌧️';
+      if (code >= 71 && code <= 77) return '❄️';
+      if (code >= 80 && code <= 82) return '🌦️';
+      if (code >= 95) return '⛈️';
+      return '🌤️';
+  }
+  function getWeatherDesc(code) {
+      if (code === 0) return 'Despejado';
+      if (code === 1 || code === 2 || code === 3) return 'Algo nublado';
+      if (code === 45 || code === 48) return 'Niebla';
+      if (code >= 51 && code <= 55) return 'Llovizna';
+      if (code >= 61 && code <= 67) return 'Lluvia';
+      if (code >= 71 && code <= 77) return 'Nieve';
+      if (code >= 80 && code <= 82) return 'Chubascos';
+      if (code >= 95) return 'Tormenta';
+      return 'Variable';
+  }
 </script>
 </body>
 </html>
