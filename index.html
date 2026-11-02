@@ -146,7 +146,12 @@
   }
   [data-theme="dark"] .month-event-text { color: #93c5fd; background: rgba(59, 130, 246, 0.25); }
 
-  .mobile-text { display: none; }
+  .weather-btn {
+      position: absolute; bottom: 2px; right: 2px; background: rgba(59, 130, 246, 0.2);
+      border: 1px solid #3b82f6; border-radius: 4px; font-size: 9px; padding: 1px 3px;
+      color: #2563eb; font-weight: bold; cursor: pointer; z-index: 10;
+  }
+  [data-theme="dark"] .weather-btn { color: #60a5fa; border-color: #60a5fa; }
 
   .bottom-bar { 
     position: fixed; bottom: 0; left: 0; right: 0; background: var(--cal-bg); border-top: 1px solid var(--border-color);
@@ -198,8 +203,8 @@
   .modal.active { display: flex; animation: fadeIn 0.2s; }
   .modal-content { background: var(--cal-bg); padding: 25px; border-radius: 20px 20px 0 0; width: 100%; max-width: 600px; box-shadow: 0 -10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; padding-bottom: max(25px, env(safe-area-inset-bottom)); animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
   
-  #day-modal { align-items: center; padding: 20px; }
-  #day-modal .modal-content { border-radius: 16px; padding: 20px; max-height: 85vh; padding-bottom: 20px; animation: scaleIn 0.2s cubic-bezier(0.4, 0, 0.2, 1); display:flex; flex-direction:column; width: 100%; max-width: 400px;} 
+  #day-modal, #weather-modal { align-items: center; padding: 20px; }
+  #day-modal .modal-content, #weather-modal .modal-content { border-radius: 16px; padding: 20px; max-height: 85vh; padding-bottom: 20px; animation: scaleIn 0.2s cubic-bezier(0.4, 0, 0.2, 1); display:flex; flex-direction:column; width: 100%; max-width: 400px;} 
   
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -222,8 +227,13 @@
   .event-card h4 { margin: 0 0 4px 0; font-size: 15px; }
   .event-card p { margin: 0; font-size: 13px; color: var(--muted); }
 
-  .btn-danger { background: #ef4444 !important; color: white !important; border: none !important; }
-  .btn-danger:hover { background: #dc2626 !important; }
+  /* WEATHER MODAL */
+  .weather-widget { background: linear-gradient(135deg, #60a5fa, #3b82f6); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
+  .weather-icon { font-size: 48px; margin: 10px 0; }
+  .weather-temp { font-size: 32px; font-weight: bold; }
+  .weather-desc { font-size: 16px; margin-bottom: 10px; text-transform: capitalize; }
+  .weather-details { display: flex; justify-content: space-around; font-size: 12px; background: rgba(0,0,0,0.1); padding: 10px; border-radius: 8px; }
+  .weather-location { font-size: 12px; font-weight: bold; margin-top: 10px; opacity: 0.9; }
 
   @media (max-width: 600px) {
     .calendar-header { grid-template-columns: 20px repeat(7, minmax(0, 1fr)); font-size: 12px; }
@@ -286,7 +296,7 @@
 
 <div class="bottom-bar" id="palette-bar"></div>
 
-<!-- MODAL INFO DEL DÍA (Pop-up central) -->
+<!-- MODAL INFO DEL DÍA -->
 <div class="modal" id="day-modal" onclick="if(event.target===this) closeDayModal()">
   <div class="modal-content" style="flex-grow:1; display:flex; flex-direction:column; max-height:85vh;">
     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px; flex-shrink:0;">
@@ -330,17 +340,31 @@
   </div>
 </div>
 
+<!-- MODAL DEL CLIMA -->
+<div class="modal" id="weather-modal" onclick="if(event.target===this) closeWeatherModal()">
+  <div class="modal-content">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">
+        <h2 id="weather-modal-title" style="margin:0;">El Tiempo</h2>
+        <button onclick="closeWeatherModal()" style="background:var(--bg-color); border:none; width:36px; height:36px; border-radius:50%; font-size:16px;">✖</button>
+    </div>
+    
+    <div class="weather-widget" id="weather-widget-content">
+        <!-- Contenido dinámico del clima -->
+        <p>Cargando previsión para tu ubicación...</p>
+    </div>
+    <p style="text-align:center; font-size:10px; color:var(--muted); margin:0; margin-top:10px;">Fuente: Open-Meteo API</p>
+  </div>
+</div>
+
+
 <!-- MODAL DE CONFIGURACIÓN DE TURNOS -->
 <div class="modal" id="config-modal" onclick="if(event.target===this) closeConfig()">
   <div class="modal-content">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <h2 style="margin:0;">Configuración general</h2>
+        <h2 style="margin:0;">Turnos</h2>
         <button onclick="closeConfig()" style="background:var(--bg-color); border:none; width:36px; height:36px; border-radius:50%; font-size:16px;">✖</button>
     </div>
     
-    <button onclick="clearCalendar()" class="btn-danger" style="width: 100%; padding: 15px; font-size: 16px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);">🗑️ LIMPIAR CALENDARIO (Borrar todo)</button>
-
-    <h3 style="font-size: 16px; margin-bottom: 15px;">Tus Turnos</h3>
     <div id="shifts-list" style="margin-bottom: 20px; max-height: 30vh; overflow-y: auto; padding-right:5px;"></div>
     
     <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
@@ -382,7 +406,86 @@
     });
   }
 
+  let liveWeatherData = {};
+  let currentCityName = "Tu ubicación";
+
+  const weatherCodeMap = {
+      0: { desc: "Despejado", icon: "☀️" },
+      1: { desc: "Mayormente despejado", icon: "🌤️" },
+      2: { desc: "Parcialmente nublado", icon: "⛅" },
+      3: { desc: "Nublado", icon: "☁️" },
+      45: { desc: "Niebla", icon: "🌫️" },
+      48: { desc: "Niebla escarcha", icon: "🌫️" },
+      51: { desc: "Llovizna ligera", icon: "🌦️" },
+      53: { desc: "Llovizna moderada", icon: "🌦️" },
+      55: { desc: "Llovizna densa", icon: "🌧️" },
+      61: { desc: "Lluvia ligera", icon: "🌧️" },
+      63: { desc: "Lluvia moderada", icon: "🌧️" },
+      65: { desc: "Lluvia fuerte", icon: "🌧️" },
+      71: { desc: "Nieve ligera", icon: "❄️" },
+      73: { desc: "Nieve moderada", icon: "❄️" },
+      75: { desc: "Nieve fuerte", icon: "❄️" },
+      95: { desc: "Tormenta", icon: "⛈️" }
+  };
+
+  async function fetchCityName(lat, lon) {
+      try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+          const data = await res.json();
+          if (data && data.address) {
+              return data.address.city || data.address.town || data.address.village || "Tu ubicación";
+          }
+      } catch (e) {
+          console.error("Error obteniendo nombre de ciudad", e);
+      }
+      return "Tu ubicación";
+  }
+
+  async function fetchWeather(lat = 40.63, lon = -3.16) {
+      try {
+          const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max,windspeed_10m_max&timezone=Europe%2FMadrid`);
+          const data = await res.json();
+          liveWeatherData = {};
+          
+          currentCityName = await fetchCityName(lat, lon);
+
+          for(let i=0; i < data.daily.time.length; i++) {
+              const date = data.daily.time[i];
+              const code = data.daily.weathercode[i];
+              const mapped = weatherCodeMap[code] || { desc: "Variable", icon: "⛅" };
+              liveWeatherData[date] = {
+                  temp: `${Math.round(data.daily.temperature_2m_max[i])}° / ${Math.round(data.daily.temperature_2m_min[i])}°`,
+                  desc: mapped.desc,
+                  icon: mapped.icon,
+                  rain: `${data.daily.precipitation_probability_max[i]}%`,
+                  wind: `${Math.round(data.daily.windspeed_10m_max[i])} km/h`
+              };
+          }
+          if(currentView === 'month') renderCalendar();
+          if(document.getElementById('day-modal').classList.contains('active')) renderDayModalContent();
+          
+          if(document.getElementById('weather-modal').classList.contains('active')) {
+             const activeDate = document.getElementById('weather-modal').getAttribute('data-active-date');
+             if(activeDate) renderWeatherModalContent(activeDate);
+          }
+      } catch(e) {
+          console.error("Error obteniendo clima", e);
+      }
+  }
+
+  function getLocationAndWeather() {
+      if ("geolocation" in navigator) {
+          navigator.geolocation.getCurrentPosition(
+              (position) => fetchWeather(position.coords.latitude, position.coords.longitude),
+              (error) => fetchWeather() // Fallback a Guadalajara (context)
+          );
+      } else {
+          fetchWeather();
+      }
+  }
+
   let currentDate = new Date();
+  currentDate.setFullYear(2026, 10, 2); 
   let currentView = 'month'; 
   let activeShiftId = null;
   let selectedDay = new Date();
@@ -523,6 +626,42 @@
 
   const realTodayStr = formatDateStr(new Date());
 
+  function openWeatherModal(e, dateStr) {
+      if(e) e.stopPropagation(); 
+      document.getElementById('weather-modal').classList.add('active');
+      document.getElementById('weather-modal').setAttribute('data-active-date', dateStr);
+      
+      const parts = dateStr.split('-');
+      const d = new Date(parts[0], parts[1]-1, parts[2]);
+      document.getElementById('weather-modal-title').textContent = `${d.getDate()} ${monthNames[d.getMonth()]}`;
+      
+      renderWeatherModalContent(dateStr);
+  }
+  
+  function renderWeatherModalContent(dateStr) {
+      const data = liveWeatherData[dateStr];
+      const content = document.getElementById('weather-widget-content');
+      
+      if(data) {
+          content.innerHTML = `
+              <div class="weather-icon">${data.icon}</div>
+              <div class="weather-temp">${data.temp}</div>
+              <div class="weather-desc">${data.desc}</div>
+              <div class="weather-location" style="color: rgba(255,255,255,0.8);">📍 ${currentCityName}</div>
+              <div class="weather-details" style="margin-top:15px;">
+                  <div>💧 Precip: ${data.rain}</div>
+                  <div>💨 Viento: ${data.wind}</div>
+              </div>
+          `;
+      } else {
+           content.innerHTML = `<p>Cargando o previsión no disponible...</p>`;
+      }
+  }
+
+  function closeWeatherModal() {
+      document.getElementById('weather-modal').classList.remove('active');
+  }
+
   function renderCalendar() {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -556,7 +695,12 @@
           }
       };
 
-      dayEl.innerHTML = `<div style="width:100%;"><div class="date-num">${d.getDate()}</div></div>`;
+      let weatherBtnHtml = '';
+      if(liveWeatherData[dateStr]) {
+          weatherBtnHtml = `<div class="weather-btn" onclick="openWeatherModal(event, '${dateStr}')">${liveWeatherData[dateStr].icon}</div>`;
+      }
+
+      dayEl.innerHTML = `<div style="width:100%;"><div class="date-num">${d.getDate()}</div></div>${weatherBtnHtml}`;
 
       if (assignedShifts[dateStr]) {
         assignedShifts[dateStr].forEach(sId => {
@@ -629,7 +773,17 @@
       } else {
           htmlEvents = '<p style="color: var(--muted); font-size: 14px;">No hay eventos para este día.</p>';
       }
-      eventsList.innerHTML = htmlEvents;
+      
+      let weatherBtnHtml = '';
+      if (liveWeatherData[dateStr]) {
+          weatherBtnHtml = `
+          <div style="display:flex; gap:10px; margin-top: 15px; margin-bottom: 5px;">
+              <button onclick="openWeatherModal(event, '${dateStr}')" style="flex:1; background: #3b82f6; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size:14px;">⛅ Ver Tiempo en ${currentCityName}</button>
+              <button onclick="getLocationAndWeather()" style="background: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; font-size:16px;" title="Actualizar ubicación y tiempo">🔄</button>
+          </div>`;
+      }
+      
+      eventsList.innerHTML = htmlEvents + weatherBtnHtml;
   }
 
   let yearScrollTimeout;
@@ -842,17 +996,6 @@
       }
   }
 
-  function clearCalendar() {
-      if(confirm('⚠️ ¿Estás seguro de que quieres BORRAR TODOS los turnos y eventos asignados en tu calendario? Esta acción no se puede deshacer.')) {
-          assignedShifts = {};
-          calEvents = {};
-          saveData();
-          renderCalendar();
-          closeConfig();
-          alert("Calendario limpiado correctamente.");
-      }
-  }
-
   function toggleShiftOnDate(dateStr) {
     if (!activeShiftId) return;
     if (!assignedShifts[dateStr]) assignedShifts[dateStr] = [];
@@ -995,1006 +1138,8 @@
   updateHeader();
   renderPalette();
   
-</script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>TurnosApp</title>
-<meta name="theme-color" content="#e4e4e7">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<style>
-  :root {
-    --bg-color: #e4e4e7;
-    --text-color: #18181b;
-    --cal-bg: #ffffff;
-    --border-color: #d4d4d8;
-    --header-bg: #e4e4e7;
-    --day-hover: #f4f4f5;
-    --muted: #71717a;
-    --pill-text: #ffffff;
-    --other-month: #f4f4f5;
-  }
-  
-  :root[data-season="winter"] { --bg-color: #bae6fd; --header-bg: #bae6fd; }
-  :root[data-season="spring"] { --bg-color: #bbf7d0; --header-bg: #bbf7d0; }
-  :root[data-season="summer"] { --bg-color: #fde68a; --header-bg: #fde68a; }
-  :root[data-season="autumn"] { --bg-color: #fed7aa; --header-bg: #fed7aa; }
-
-  [data-theme="dark"] {
-    --bg-color: #000000;
-    --text-color: #f4f4f5;
-    --cal-bg: #1e1e1e;
-    --border-color: #2c2c2e;
-    --header-bg: #000000;
-    --day-hover: #2c2c2c;
-    --muted: #a1a1aa;
-    --other-month: #121212;
-  }
-  
-  [data-theme="dark"][data-season="winter"] { --bg-color: #020617; --header-bg: #020617; }
-  [data-theme="dark"][data-season="spring"] { --bg-color: #022c22; --header-bg: #022c22; }
-  [data-theme="dark"][data-season="summer"] { --bg-color: #290f02; --header-bg: #290f02; }
-  [data-theme="dark"][data-season="autumn"] { --bg-color: #1c1311; --header-bg: #1c1311; }
-
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    margin: 0;
-    padding: env(safe-area-inset-top) 0 0 0;
-    transition: background-color 0.5s ease, color 0.3s ease;
-    user-select: none;
-    overflow-x: hidden;
-    height: 100vh; 
-    display: flex;
-    flex-direction: column;
-  }
-
-  .container { 
-    width: 100%; 
-    max-width: 800px; 
-    margin: 0 auto; 
-    padding: 10px; 
-    padding-bottom: 90px; 
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  }
-  
-  header { padding: 10px 5px; display: flex; flex-direction: column; gap: 12px; flex-shrink: 0; }
-  .top-bar { display: flex; justify-content: space-between; align-items: center; }
-  h1 { margin: 0; font-size: 26px; text-transform: capitalize; font-weight: 700; transition: color 0.3s; }
-  
-  .controls { display: flex; gap: 8px; flex-wrap: wrap; }
-  button { 
-    background: var(--cal-bg); color: var(--text-color); border: 1px solid var(--border-color); 
-    padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600;
-    display: flex; align-items: center; justify-content: center; gap: 5px;
-    transition: background-color 0.2s, transform 0.1s;
-  }
-  button:active { transform: scale(0.95); }
-  
-  .view-tabs { display: flex; gap: 5px; background: var(--border-color); padding: 3px; border-radius: 8px; }
-  .view-tabs button { border: none; background: transparent; color: var(--muted); }
-  .view-tabs button.active { background: var(--cal-bg); color: var(--text-color); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-
-  /* VISTAS */
-  #month-view, #year-view { display: none; flex-grow: 1; flex-direction: column; width: 100%; }
-  .active-view { display: flex !important; }
-
-  /* MES VISTA */
-  .calendar-header { 
-    display: grid; grid-template-columns: 25px repeat(7, 1fr); 
-    text-align: center; font-weight: 600; margin-bottom: 8px; font-size: 13px;
-    flex-shrink: 0;
-    width: 100%;
-  }
-  
-  .calendar-grid { 
-    display: grid; 
-    grid-template-columns: 25px repeat(7, minmax(0, 1fr)); 
-    gap: 1px; 
-    background-color: var(--border-color); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    flex-grow: 1; 
-    grid-template-rows: repeat(6, minmax(0, 1fr)); 
-    width: 100%;
-  }
-  
-  .week-number { 
-    display: flex; align-items: center; justify-content: center; 
-    background: var(--bg-color); color: var(--muted); font-size: 10px; font-weight: bold;
-  }
-  
-  .day { 
-    background: var(--cal-bg); padding: 4px; cursor: pointer; 
-    display: flex; flex-direction: column; gap: 2px; position: relative;
-    width: 100%; 
-    overflow: hidden; 
-  }
-  
-  .day .date-num { font-size: 13px; font-weight: 700; text-align: right; margin-bottom: 2px; }
-  .day.other-month { background: var(--other-month); opacity: 0.8; }
-  .day:active { background: var(--day-hover); }
-  
-  .day.today { background-color: rgba(59, 130, 246, 0.1) !important; border: 2px solid #3b82f6; border-radius: 4px; }
-  .day.today .date-num { color: #ffffff; font-weight: 900; background: #3b82f6; border-radius: 50%; padding: 1px 6px; display: inline-block; float: right; }
-  [data-theme="dark"] .day.today { background-color: rgba(59, 130, 246, 0.15) !important; border-color: #60a5fa; }
-  [data-theme="dark"] .day.today .date-num { color: #ffffff; background: #2563eb; }
-
-  .shift-pill { 
-    font-size: 9px; font-weight: 800; border-radius: 4px; padding: 2px 4px; 
-    display: flex; align-items: center; justify-content: center; gap: 2px; 
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
-    color: var(--pill-text); text-transform: uppercase; clear: both;
-    width: 100%; 
-  }
-
-  .month-event-text {
-      font-size: 8px; color: #1d4ed8; background: rgba(59, 130, 246, 0.15);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      width: 100%; text-align: left; padding: 2px; margin-top: 1px;
-      border-radius: 3px; font-weight: bold;
-  }
-  [data-theme="dark"] .month-event-text { color: #93c5fd; background: rgba(59, 130, 246, 0.25); }
-
-  .mobile-text { display: none; }
-
-  .bottom-bar { 
-    position: fixed; bottom: 0; left: 0; right: 0; background: var(--cal-bg); border-top: 1px solid var(--border-color);
-    padding: 10px 15px; padding-bottom: max(20px, env(safe-area-inset-bottom)); display: flex; gap: 15px; overflow-x: auto; scrollbar-width: none;
-    box-shadow: 0 -4px 15px rgba(0,0,0,0.1); align-items: center; z-index: 50; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .bottom-bar.hidden { transform: translateY(100%); }
-  .bottom-bar::-webkit-scrollbar { display: none; }
-  .palette-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; opacity: 0.4; transition: opacity 0.2s, transform 0.2s; min-width: 60px; }
-  .palette-item.active { opacity: 1; transform: scale(1.05); }
-  .palette-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 14px; margin-bottom: 6px; color: var(--pill-text); font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-  .palette-name { font-size: 10px; font-weight: 700; text-transform: uppercase; }
-
-  /* RULETA DE AÑOS */
-  .year-picker-wrapper {
-      position: relative; height: 120px; max-width: 220px; margin: 0 auto 20px auto;
-      background: var(--cal-bg); border-radius: 12px; border: 1px solid var(--border-color);
-      box-shadow: inset 0 2px 10px rgba(0,0,0,0.05); overflow: hidden;
-  }
-  .year-picker { height: 100%; overflow-y: auto; scroll-snap-type: y mandatory; scrollbar-width: none; }
-  .year-picker::-webkit-scrollbar { display: none; }
-  .year-item {
-      height: 40px; display: flex; align-items: center; justify-content: center;
-      scroll-snap-align: center; font-size: 18px; color: var(--muted);
-      transition: all 0.2s; cursor: pointer; user-select: none;
-  }
-  .year-item.active { font-size: 26px; font-weight: 900; color: var(--text-color); }
-  .year-picker-highlight {
-      position: absolute; top: 40px; left: 0; right: 0; height: 40px;
-      border-top: 2px solid var(--text-color); border-bottom: 2px solid var(--text-color);
-      pointer-events: none; opacity: 0.1;
-  }
-  .year-picker-wrapper::before, .year-picker-wrapper::after {
-      content: ""; position: absolute; left: 0; right: 0; height: 40px; pointer-events: none; z-index: 2;
-  }
-  .year-picker-wrapper::before { top: 0; background: linear-gradient(to bottom, var(--cal-bg), transparent); }
-  .year-picker-wrapper::after { bottom: 0; background: linear-gradient(to top, var(--cal-bg), transparent); }
-
-  #year-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 10px 0; overflow-y:auto; flex-grow:1;}
-  .month-card {
-      background: var(--cal-bg); padding: 20px 5px; border: 1px solid var(--border-color);
-      border-radius: 12px; text-align: center; font-weight: bold; font-size: 14px;
-      cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-  }
-  .month-card:active { transform: scale(0.95); background: var(--day-hover); }
-
-  /* MODALES */
-  .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); justify-content: center; align-items: flex-end; padding: 0; z-index: 100; backdrop-filter: blur(2px); }
-  .modal.active { display: flex; animation: fadeIn 0.2s; }
-  .modal-content { background: var(--cal-bg); padding: 25px; border-radius: 20px 20px 0 0; width: 100%; max-width: 600px; box-shadow: 0 -10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; padding-bottom: max(25px, env(safe-area-inset-bottom)); animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-  
-  #day-modal { align-items: center; padding: 20px; }
-  #day-modal .modal-content { border-radius: 16px; padding: 20px; max-height: 85vh; padding-bottom: 20px; animation: scaleIn 0.2s cubic-bezier(0.4, 0, 0.2, 1); display:flex; flex-direction:column; width: 100%; max-width: 400px;} 
-  
-  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-  .form-group { margin-bottom: 15px; display: flex; flex-direction: column; gap: 6px; }
-  .form-group label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; }
-  .form-group input, .form-group select { padding: 12px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); border-radius: 8px; font-size: 16px; width: 100%; outline:none;}
-  .form-group input:focus { border-color: #3b82f6; }
-  .form-group input[type="color"] { padding: 2px; height: 46px; cursor: pointer; }
-  
-  .shift-list-item { display: flex; flex-direction: column; gap: 8px; background: var(--bg-color); padding: 12px; border-radius: 8px; margin-bottom: 8px; }
-  .shift-list-header { display: flex; justify-content: space-between; align-items: center; }
-  .shift-actions { display: flex; gap: 5px; }
-  .shift-actions button { padding: 8px 12px; font-size: 14px; border: none; border-radius: 6px; color: white; cursor: pointer; }
-
-  /* DAY CARDS */
-  .day-shift-card { padding: 15px; border-radius: 10px; color: white; font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-  .event-card { padding: 12px; border-left: 4px solid #3b82f6; background: var(--bg-color); border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-  .event-card h4 { margin: 0 0 4px 0; font-size: 15px; }
-  .event-card p { margin: 0; font-size: 13px; color: var(--muted); }
-
-  .btn-danger { background: #ef4444 !important; color: white !important; border: none !important; }
-  .btn-danger:hover { background: #dc2626 !important; }
-
-  @media (max-width: 600px) {
-    .calendar-header { grid-template-columns: 20px repeat(7, minmax(0, 1fr)); font-size: 12px; }
-    .calendar-grid { grid-template-columns: 20px repeat(7, minmax(0, 1fr)); border-radius: 8px;}
-    .day { padding: 2px; gap: 2px; }
-    .day .date-num { font-size: 12px; }
-    .shift-pill { height: 16px; padding: 1px 0; border-radius: 3px; font-size: 9px; }
-    .desktop-text { display: none; }
-    .mobile-text { display: inline-block; font-size: 8px; line-height: 14px; overflow: hidden; }
-    h1 { font-size: 22px; }
-    #year-grid { grid-template-columns: repeat(2, 1fr); }
-  }
-</style>
-</head>
-<body>
-
-<div class="container" id="app">
-  <header>
-    <div class="top-bar">
-      <h1 id="month-year-display">Noviembre</h1>
-      <div class="controls">
-        <button onclick="document.getElementById('ics-upload').click()" title="Importar ICS">📥</button>
-        <input type="file" id="ics-upload" style="display:none" accept=".ics" onchange="importICS(event)">
-        <button onclick="exportICS()" title="Exportar a Google Calendar (ICS)">📤</button>
-        <button onclick="toggleTheme()" id="theme-btn">🌓</button>
-        <button onclick="openConfig()">⚙️</button>
-      </div>
-    </div>
-    
-    <div class="top-bar" id="navigation-bar">
-      <div class="controls">
-        <button onclick="prevPeriod()" style="padding: 10px 15px;">◀</button>
-        <button onclick="nextPeriod()" style="padding: 10px 15px;">▶</button>
-      </div>
-      <div class="view-tabs">
-        <button id="tab-month" class="active" onclick="setView('month')">Mes</button>
-        <button id="tab-year" onclick="setView('year')">Año</button>
-      </div>
-    </div>
-  </header>
-
-  <!-- VISTA MENSUAL -->
-  <div id="month-view" class="active-view">
-    <div class="calendar-header">
-      <div></div>
-      <div>L</div><div>M</div><div>X</div><div>J</div><div>V</div><div>S</div><div>D</div>
-    </div>
-    <div class="calendar-grid" id="calendar-grid"></div>
-  </div>
-
-  <!-- VISTA ANUAL -->
-  <div id="year-view">
-    <div class="year-picker-wrapper">
-       <div class="year-picker" id="year-picker" onscroll="handleYearScroll()"></div>
-       <div class="year-picker-highlight"></div>
-    </div>
-    <div id="year-grid"></div>
-  </div>
-</div>
-
-<div class="bottom-bar" id="palette-bar"></div>
-
-<!-- MODAL INFO DEL DÍA (Pop-up central) -->
-<div class="modal" id="day-modal" onclick="if(event.target===this) closeDayModal()">
-  <div class="modal-content" style="flex-grow:1; display:flex; flex-direction:column; max-height:85vh;">
-    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px; flex-shrink:0;">
-        <h2 id="day-modal-title" style="margin:0;">1 Noviembre 2026</h2>
-        <button onclick="closeDayModal()" style="background:var(--bg-color); border:none; width:36px; height:36px; border-radius:50%; font-size:16px;">✖</button>
-    </div>
-    
-    <div style="overflow-y:auto; flex-grow:1; padding-right:5px;">
-        <h3 style="margin-top:0px; font-size:16px;">Turnos del día</h3>
-        <div id="day-shifts-content" style="margin-bottom: 20px;"></div>
-        
-        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
-        
-        <h3 style="margin-top:0; display:flex; align-items:center; gap:8px;">📅 Eventos</h3>
-        <div id="day-events-list"></div>
-        
-        <div style="background: var(--bg-color); padding: 15px; border-radius: 12px; margin-top: 15px;">
-            <div class="form-group">
-                <input type="text" id="ev-title" placeholder="Añadir nueva cita...">
-            </div>
-            <div style="display:flex; gap:10px;">
-               <div class="form-group" style="flex:1">
-                   <label>Hora</label>
-                   <input type="time" id="ev-time">
-               </div>
-               <div class="form-group" style="flex:1">
-                   <label>Alarma</label>
-                   <select id="ev-alarm">
-                       <option value="0">Sin aviso</option>
-                       <option value="0.01">En el momento</option>
-                       <option value="5">5 min antes</option>
-                       <option value="15">15 min antes</option>
-                       <option value="30">30 min antes</option>
-                       <option value="60">1 hora antes</option>
-                   </select>
-               </div>
-            </div>
-            <button onclick="addEvent()" style="width:100%; background:#10b981; color:white; padding:14px; margin-top:5px; border:none; border-radius:8px; font-weight:bold; font-size: 16px;">Guardar Evento</button>
-        </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL DE CONFIGURACIÓN DE TURNOS -->
-<div class="modal" id="config-modal" onclick="if(event.target===this) closeConfig()">
-  <div class="modal-content">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <h2 style="margin:0;">Configuración general</h2>
-        <button onclick="closeConfig()" style="background:var(--bg-color); border:none; width:36px; height:36px; border-radius:50%; font-size:16px;">✖</button>
-    </div>
-    
-    <button onclick="clearCalendar()" class="btn-danger" style="width: 100%; padding: 15px; font-size: 16px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);">🗑️ LIMPIAR CALENDARIO (Borrar todo)</button>
-
-    <h3 style="font-size: 16px; margin-bottom: 15px;">Tus Turnos</h3>
-    <div id="shifts-list" style="margin-bottom: 20px; max-height: 30vh; overflow-y: auto; padding-right:5px;"></div>
-    
-    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
-    
-    <h3 id="form-title" style="font-size: 16px; margin-bottom: 15px;">Añadir Nuevo Turno</h3>
-    <input type="hidden" id="edit-shift-id" value="">
-    
-    <div class="form-group">
-      <label>Nombre</label>
-      <input type="text" id="new-shift-name" placeholder="Ej: TURNO, VIAJE...">
-    </div>
-    <div style="display:flex; gap:10px;">
-        <div class="form-group" style="flex: 1;">
-          <label>Color</label>
-          <input type="color" id="new-shift-color" value="#4ade80">
-        </div>
-        <div class="form-group" style="flex: 1;">
-          <label>Icono</label>
-          <input type="text" id="new-shift-emoji" placeholder="TU, 🏖️, 💻" maxlength="4">
-        </div>
-    </div>
-    <div class="form-group">
-      <label>Horario</label>
-      <input type="time" id="new-shift-start" style="width: 48%; display:inline-block;"> - 
-      <input type="time" id="new-shift-end" style="width: 48%; display:inline-block;">
-    </div>
-    
-    <div style="display:flex; gap:10px; margin-top:20px;">
-        <button id="btn-cancel-edit" onclick="resetForm()" style="flex: 1; background: var(--bg-color); display: none; padding: 14px;">Cancelar</button>
-        <button onclick="saveShift()" style="flex: 2; background: #3b82f6; color: white; padding: 14px; font-size:16px;">Guardar Turno</button>
-    </div>
-  </div>
-</div>
-
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(err => console.log('SW error:', err));
-    });
-  }
-
-  let currentDate = new Date();
-  let currentView = 'month'; 
-  let activeShiftId = null;
-  let selectedDay = new Date();
-
-  const defaultShifts = [
-    { id: 's1', name: 'TURNO', color: '#4ade80', emoji: 'TU', timeStart: '08:00', timeEnd: '15:00' },
-    { id: 's2', name: 'LIBRE', color: '#ef4444', emoji: 'LI', timeStart: '', timeEnd: '' },
-    { id: 's3', name: 'TELETRABAJO', color: '#a855f7', emoji: '💻', timeStart: '09:00', timeEnd: '18:00' },
-    { id: 's4', name: 'VACACIONES', color: '#f59e0b', emoji: '🏖️', timeStart: '', timeEnd: '' }
-  ];
-
-  let shifts = JSON.parse(localStorage.getItem('cal_shifts')) || defaultShifts;
-  let assignedShifts = JSON.parse(localStorage.getItem('cal_assigned')) || {};
-  let calEvents = JSON.parse(localStorage.getItem('cal_events')) || {};
-  let isDarkMode = localStorage.getItem('cal_theme') === 'dark';
-
-  if (isDarkMode) document.documentElement.setAttribute('data-theme', 'dark');
-
-  const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-
-  function formatDateStr(dateObj) {
-      return `${dateObj.getFullYear()}-${String(dateObj.getMonth()+1).padStart(2,'0')}-${String(dateObj.getDate()).padStart(2,'0')}`;
-  }
-
-  function toggleTheme() {
-    isDarkMode = !isDarkMode;
-    if (isDarkMode) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      localStorage.setItem('cal_theme', 'dark');
-      document.querySelector('meta[name="theme-color"]').setAttribute("content", "#000000");
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-      localStorage.setItem('cal_theme', 'light');
-      document.querySelector('meta[name="theme-color"]').setAttribute("content", "#e4e4e7");
-    }
-  }
-
-  function updateSeason() {
-      const m = currentDate.getMonth();
-      let season = 'winter'; 
-      if (m >= 2 && m <= 4) season = 'spring'; 
-      else if (m >= 5 && m <= 7) season = 'summer'; 
-      else if (m >= 8 && m <= 10) season = 'autumn'; 
-      document.documentElement.setAttribute('data-season', season);
-      
-      const themeColorMeta = document.querySelector('meta[name="theme-color"]');
-      if(isDarkMode){
-          if(season=='winter') themeColorMeta.content = "#020617";
-          else if(season=='spring') themeColorMeta.content = "#022c22";
-          else if(season=='summer') themeColorMeta.content = "#290f02";
-          else if(season=='autumn') themeColorMeta.content = "#1c1311";
-      }else{
-          if(season=='winter') themeColorMeta.content = "#bae6fd";
-          else if(season=='spring') themeColorMeta.content = "#bbf7d0";
-          else if(season=='summer') themeColorMeta.content = "#fde68a";
-          else if(season=='autumn') themeColorMeta.content = "#fed7aa";
-      }
-  }
-
-  function saveData() {
-    localStorage.setItem('cal_shifts', JSON.stringify(shifts));
-    localStorage.setItem('cal_assigned', JSON.stringify(assignedShifts));
-    localStorage.setItem('cal_events', JSON.stringify(calEvents));
-  }
-
-  function getWeekNumber(d) {
-    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
-    const yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
-    return Math.ceil((((date - yearStart) / 86400000) + 1)/7);
-  }
-
-  function renderPalette() {
-    const bar = document.getElementById('palette-bar');
-    bar.innerHTML = '';
-    
-    const eraser = document.createElement('div');
-    eraser.className = `palette-item ${activeShiftId === null ? 'active' : ''}`;
-    eraser.onclick = () => { activeShiftId = null; renderPalette(); };
-    eraser.innerHTML = `<div class="palette-icon" style="background: #333; color: white;">🔍</div><div class="palette-name">Ver Día</div>`;
-    bar.appendChild(eraser);
-    
-    const delTurno = document.createElement('div');
-    delTurno.className = `palette-item ${activeShiftId === 'eraser' ? 'active' : ''}`;
-    delTurno.onclick = () => { activeShiftId = 'eraser'; renderPalette(); };
-    delTurno.innerHTML = `<div class="palette-icon" style="background: #ef4444; color: white;">✖</div><div class="palette-name">Borrar</div>`;
-    bar.appendChild(delTurno);
-
-    shifts.forEach(shift => {
-      const item = document.createElement('div');
-      item.className = `palette-item ${activeShiftId === shift.id ? 'active' : ''}`;
-      item.onclick = () => { activeShiftId = shift.id; renderPalette(); };
-      const abbr = shift.emoji || shift.name.substring(0,2).toUpperCase();
-      item.innerHTML = `<div class="palette-icon" style="background: ${shift.color};">${abbr}</div><div class="palette-name">${shift.name}</div>`;
-      bar.appendChild(item);
-    });
-  }
-
-  function setView(view) {
-    currentView = view;
-    document.querySelectorAll('.view-tabs button').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(`tab-${view}`).classList.add('active');
-    
-    document.getElementById('month-view').classList.remove('active-view');
-    document.getElementById('year-view').classList.remove('active-view');
-    document.getElementById(`${view}-view`).classList.add('active-view');
-    
-    const pBar = document.getElementById('palette-bar');
-    if (view === 'year') { 
-        pBar.classList.add('hidden');
-    } else { 
-        pBar.classList.remove('hidden');
-    }
-
-    updateSeason();
-    updateHeader();
-    if(view === 'month') renderCalendar();
-    if(view === 'year') renderYearView();
-  }
-
-  function updateHeader() {
-      const title = document.getElementById('month-year-display');
-      if (currentView === 'month') { title.textContent = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`; } 
-      else if (currentView === 'year') { title.textContent = `${currentDate.getFullYear()}`; } 
-  }
-
-  function prevPeriod() {
-      if (currentView === 'month') { currentDate.setMonth(currentDate.getMonth() - 1); }
-      else if (currentView === 'year') { scrollToYear(currentDate.getFullYear() - 1); }
-      updateSeason(); setView(currentView); 
-  }
-
-  function nextPeriod() {
-      if (currentView === 'month') { currentDate.setMonth(currentDate.getMonth() + 1); }
-      else if (currentView === 'year') { scrollToYear(currentDate.getFullYear() + 1); }
-      updateSeason(); setView(currentView);
-  }
-
-  const realTodayStr = formatDateStr(new Date());
-
-  function renderCalendar() {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const grid = document.getElementById('calendar-grid');
-    grid.innerHTML = '';
-
-    const firstDay = new Date(year, month, 1);
-    let startDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; 
-    const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - startDayOfWeek);
-    
-    for (let i = 0; i < 42; i++) {
-      const d = new Date(startDate);
-      d.setDate(startDate.getDate() + i);
-      const dateStr = formatDateStr(d);
-
-      if (i % 7 === 0) {
-         const weekNum = document.createElement('div');
-         weekNum.className = 'week-number';
-         weekNum.textContent = getWeekNumber(d);
-         grid.appendChild(weekNum);
-      }
-
-      const dayEl = document.createElement('div');
-      dayEl.className = `day ${d.getMonth() !== month ? 'other-month' : ''} ${dateStr === realTodayStr ? 'today' : ''}`;
-      dayEl.onclick = (e) => {
-          if (activeShiftId) { toggleShiftOnDate(dateStr); } 
-          else { 
-             selectedDay = new Date(d); 
-             openDayModal(); 
-          }
-      };
-
-      dayEl.innerHTML = `<div style="width:100%;"><div class="date-num">${d.getDate()}</div></div>`;
-
-      if (assignedShifts[dateStr]) {
-        assignedShifts[dateStr].forEach(sId => {
-           const s = shifts.find(x => x.id === sId);
-           if (s) {
-             const abbr = s.emoji || s.name.substring(0,3).toUpperCase();
-             const pill = document.createElement('div');
-             pill.className = 'shift-pill';
-             pill.style.backgroundColor = s.color;
-             pill.innerHTML = `<span class="desktop-text">${s.name}</span><span class="mobile-text">${abbr}</span>`;
-             dayEl.appendChild(pill);
-           }
-        });
-      }
-      
-      if (calEvents[dateStr] && calEvents[dateStr].length > 0) {
-          calEvents[dateStr].forEach(ev => {
-              const evText = document.createElement('div');
-              evText.className = 'month-event-text';
-              evText.textContent = ev.title;
-              dayEl.appendChild(evText);
-          });
-      }
-
-      grid.appendChild(dayEl);
-    }
-  }
-
-  function openDayModal() {
-      document.getElementById('day-modal').classList.add('active');
-      renderDayModalContent();
-  }
-
-  function closeDayModal() {
-      document.getElementById('day-modal').classList.remove('active');
-  }
-
-  function renderDayModalContent() {
-      const dateStr = formatDateStr(selectedDay);
-      document.getElementById('day-modal-title').textContent = `${selectedDay.getDate()} de ${monthNames[selectedDay.getMonth()]} ${selectedDay.getFullYear()}`;
-      
-      const shiftsContent = document.getElementById('day-shifts-content');
-      let htmlShifts = '';
-      if (assignedShifts[dateStr] && assignedShifts[dateStr].length > 0) {
-          assignedShifts[dateStr].forEach(sId => {
-              const s = shifts.find(x => x.id === sId);
-              if (s) {
-                  htmlShifts += `<div class="day-shift-card" style="background:${s.color}">
-                      <div style="display:flex; align-items:center;">
-                          <span style="font-size: 24px;">${s.emoji || ''}</span><span style="font-size: 18px; margin-left:12px; color:white;">${s.name}</span>
-                      </div>
-                      ${s.timeStart ? `<div style="color:white;">${s.timeStart} - ${s.timeEnd}</div>` : ''}
-                  </div>`;
-              }
-          });
-      } else {
-          htmlShifts = '<p style="color: var(--muted); text-align:center; font-style:italic;">Día libre o sin estado asignado.</p>';
-      }
-      shiftsContent.innerHTML = htmlShifts;
-
-      const eventsList = document.getElementById('day-events-list');
-      let htmlEvents = '';
-      if (calEvents[dateStr] && calEvents[dateStr].length > 0) {
-          calEvents[dateStr].forEach(ev => {
-              let avisoText = ev.alarmOffset == 0 ? 'Sin aviso' : (ev.alarmOffset == 0.01 ? 'Aviso puntual' : `Aviso: ${ev.alarmOffset} min`);
-              htmlEvents += `<div class="event-card"><div><h4 style="margin:0 0 5px 0;">${ev.title}</h4><p style="margin:0;font-size:13px;color:var(--muted)">🕒 ${ev.time || 'Todo el día'} &nbsp; | &nbsp; 🔔 ${avisoText}</p></div>
-                    <button onclick="deleteEvent('${dateStr}', ${ev.id})" style="background:#ef4444; color:white; border:none; padding:10px 14px; border-radius:8px; cursor:pointer;">✖</button>
-                </div>`;
-          });
-      } else {
-          htmlEvents = '<p style="color: var(--muted); font-size: 14px;">No hay eventos para este día.</p>';
-      }
-      eventsList.innerHTML = htmlEvents;
-  }
-
-  let yearScrollTimeout;
-  function handleYearScroll() {
-      clearTimeout(yearScrollTimeout);
-      yearScrollTimeout = setTimeout(() => {
-          const picker = document.getElementById('year-picker');
-          if(!picker) return;
-          const items = picker.querySelectorAll('.year-item[id]');
-          const pickerCenter = picker.getBoundingClientRect().top + (picker.clientHeight / 2);
-          
-          let closest = null; let minDiff = Infinity;
-          items.forEach(item => {
-              item.classList.remove('active');
-              const rect = item.getBoundingClientRect();
-              const itemCenter = rect.top + (rect.height / 2);
-              const diff = Math.abs(pickerCenter - itemCenter);
-              if (diff < minDiff) { minDiff = diff; closest = item; }
-          });
-          
-          if (closest) {
-              closest.classList.add('active');
-              const selectedYear = parseInt(closest.innerText);
-              if (currentDate.getFullYear() !== selectedYear) {
-                  currentDate.setFullYear(selectedYear);
-                  updateHeader();
-              }
-          }
-      }, 100);
-  }
-
-  function scrollToYear(year, animate = true) {
-      const picker = document.getElementById('year-picker');
-      if(!picker) return;
-      const item = document.getElementById(`year-item-${year}`);
-      if (item) {
-          const topPos = item.offsetTop - 40;
-          picker.scrollTo({ top: topPos, behavior: animate ? 'smooth' : 'auto' });
-          currentDate.setFullYear(year);
-          updateHeader();
-      }
-  }
-
-  function renderYearView() {
-      const grid = document.getElementById('year-grid');
-      grid.innerHTML = '';
-      for(let i = 0; i < 12; i++) {
-          const m = document.createElement('div');
-          m.className = 'month-card';
-          m.innerHTML = `<span>${monthNames[i]}</span>`;
-          m.onclick = () => {
-              currentDate.setMonth(i);
-              setView('month');
-          };
-          grid.appendChild(m);
-      }
-
-      if (!document.getElementById('year-item-2026')) {
-          const picker = document.getElementById('year-picker');
-          picker.innerHTML = `<div class="year-item" style="height:40px"></div>`;
-          for(let y = 2000; y <= 2050; y++) {
-              picker.innerHTML += `<div class="year-item" id="year-item-${y}" onclick="scrollToYear(${y})">${y}</div>`;
-          }
-          picker.innerHTML += `<div class="year-item" style="height:40px"></div>`;
-      }
-      setTimeout(() => scrollToYear(currentDate.getFullYear(), false), 50);
-  }
-
-  function exportICS() {
-      let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//TurnosApp//ES\n";
-
-      for (const dateStr in assignedShifts) {
-          const dateParts = dateStr.split('-'); 
-          const icsDate = dateParts.join('');
-          
-          let d = new Date(dateParts[0], dateParts[1]-1, dateParts[2]);
-          d.setDate(d.getDate() + 1);
-          const endParts = [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')];
-          const icsEnd = endParts.join('');
-
-          assignedShifts[dateStr].forEach(sId => {
-              const s = shifts.find(x => x.id === sId);
-              if (s) {
-                  icsContent += "BEGIN:VEVENT\n";
-                  icsContent += `DTSTART;VALUE=DATE:${icsDate}\n`;
-                  icsContent += `DTEND;VALUE=DATE:${icsEnd}\n`;
-                  icsContent += `SUMMARY:[Turno] ${s.name}\n`;
-                  icsContent += "END:VEVENT\n";
-              }
-          });
-      }
-
-      for (const dateStr in calEvents) {
-          const dateParts = dateStr.split('-');
-          calEvents[dateStr].forEach(ev => {
-              icsContent += "BEGIN:VEVENT\n";
-              if (ev.time) {
-                  const timeStr = ev.time.replace(':', '') + '00';
-                  icsContent += `DTSTART:${dateParts.join('')}T${timeStr}\n`;
-                  
-                  let d = new Date(dateParts[0], dateParts[1]-1, dateParts[2], parseInt(ev.time.split(':')[0])+1, parseInt(ev.time.split(':')[1]));
-                  const eY = d.getFullYear(); const eM = String(d.getMonth()+1).padStart(2,'0'); const eD = String(d.getDate()).padStart(2,'0');
-                  const eH = String(d.getHours()).padStart(2,'0'); const em = String(d.getMinutes()).padStart(2,'0');
-                  icsContent += `DTEND:${eY}${eM}${eD}T${eH}${em}00\n`;
-              } else {
-                  const icsDate = dateParts.join('');
-                  let d = new Date(dateParts[0], dateParts[1]-1, dateParts[2]);
-                  d.setDate(d.getDate() + 1);
-                  const icsEnd = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
-                  icsContent += `DTSTART;VALUE=DATE:${icsDate}\n`;
-                  icsContent += `DTEND;VALUE=DATE:${icsEnd}\n`;
-              }
-              icsContent += `SUMMARY:${ev.title}\n`;
-              icsContent += "END:VEVENT\n";
-          });
-      }
-      icsContent += "END:VCALENDAR";
-
-      const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'turnos_y_eventos.ics';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-  }
-
-  function importICS(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-          const content = e.target.result;
-          const events = content.split('BEGIN:VEVENT');
-          let importedCount = 0;
-
-          for (let i = 1; i < events.length; i++) {
-              const evStr = events[i];
-              const summaryMatch = evStr.match(/SUMMARY:(.*)/);
-              const dtStartMatch = evStr.match(/DTSTART(?:;.*?)?:(.*)/);
-
-              if (summaryMatch && dtStartMatch) {
-                  let summary = summaryMatch[1].trim();
-                  const dtStart = dtStartMatch[1].trim();
-
-                  let year, month, day, time = '';
-                  if (dtStart.length >= 8) {
-                      year = dtStart.substring(0, 4);
-                      month = dtStart.substring(4, 6);
-                      day = dtStart.substring(6, 8);
-                      
-                      if (dtStart.includes('T') && dtStart.length >= 15) {
-                          const tIndex = dtStart.indexOf('T');
-                          const hh = dtStart.substring(tIndex+1, tIndex+3);
-                          const mm = dtStart.substring(tIndex+3, tIndex+5);
-                          time = `${hh}:${mm}`;
-                      }
-                      
-                      if (summary.startsWith("[Turno]")) continue;
-
-                      const dateStr = `${year}-${month}-${day}`;
-                      
-                      if (!calEvents[dateStr]) calEvents[dateStr] = [];
-                      calEvents[dateStr].push({
-                          id: Date.now() + Math.random(),
-                          title: summary,
-                          time: time,
-                          alarmOffset: 0,
-                          notified: false
-                      });
-                      importedCount++;
-                  }
-              }
-          }
-          saveData();
-          if(currentView === 'month') renderCalendar();
-          alert(`Se han importado ${importedCount} eventos correctamente.`);
-      };
-      reader.readAsText(file);
-      event.target.value = ''; 
-  }
-
-  function addEvent() {
-      const dateStr = formatDateStr(selectedDay);
-      const title = document.getElementById('ev-title').value.trim();
-      const time = document.getElementById('ev-time').value;
-      const alarmOffset = parseFloat(document.getElementById('ev-alarm').value);
-      if (!title) return alert("El título del evento es obligatorio.");
-      if (!calEvents[dateStr]) calEvents[dateStr] = [];
-      calEvents[dateStr].push({ id: Date.now(), title, time, alarmOffset, notified: false });
-      saveData();
-      
-      if (alarmOffset > 0 && "Notification" in window && Notification.permission !== "granted") {
-          Notification.requestPermission();
-      }
-      document.getElementById('ev-title').value = ''; document.getElementById('ev-time').value = ''; document.getElementById('ev-alarm').value = '0';
-      
-      renderDayModalContent();
-      renderCalendar();
-  }
-
-  function deleteEvent(dateStr, id) {
-      if(confirm('¿Eliminar esta cita?')) {
-          calEvents[dateStr] = calEvents[dateStr].filter(e => e.id !== id);
-          if (calEvents[dateStr].length === 0) delete calEvents[dateStr];
-          saveData(); 
-          renderDayModalContent();
-          renderCalendar();
-      }
-  }
-
-  function clearCalendar() {
-      if(confirm('⚠️ ¿Estás seguro de que quieres BORRAR TODOS los turnos y eventos asignados en tu calendario? Esta acción no se puede deshacer.')) {
-          assignedShifts = {};
-          calEvents = {};
-          saveData();
-          renderCalendar();
-          closeConfig();
-          alert("Calendario limpiado correctamente.");
-      }
-  }
-
-  function toggleShiftOnDate(dateStr) {
-    if (!activeShiftId) return;
-    if (!assignedShifts[dateStr]) assignedShifts[dateStr] = [];
-    if (activeShiftId === 'eraser') {
-        assignedShifts[dateStr].pop(); 
-        if (assignedShifts[dateStr].length === 0) delete assignedShifts[dateStr];
-    } else {
-        if (!assignedShifts[dateStr].includes(activeShiftId)) { assignedShifts[dateStr].push(activeShiftId); } 
-        else {
-            assignedShifts[dateStr] = assignedShifts[dateStr].filter(id => id !== activeShiftId);
-            if (assignedShifts[dateStr].length === 0) delete assignedShifts[dateStr];
-        }
-    }
-    saveData();
-    if(currentView === 'month') renderCalendar();
-    
-    if (document.getElementById('day-modal').classList.contains('active')) {
-        renderDayModalContent();
-    }
-  }
-
-  let touchStartX = 0; let touchEndX = 0;
-  const mainApp = document.getElementById('app');
-
-  mainApp.addEventListener('touchstart', e => {
-      if(e.target.closest('.bottom-bar') || e.target.closest('.modal') || e.target.closest('.year-picker')) return;
-      touchStartX = e.changedTouches[0].screenX;
-  }, {passive: true});
-
-  mainApp.addEventListener('touchend', e => {
-      if(e.target.closest('.bottom-bar') || e.target.closest('.modal') || e.target.closest('.year-picker')) return;
-      touchEndX = e.changedTouches[0].screenX;
-      handleSwipe();
-  }, {passive: true});
-
-  function handleSwipe() {
-      if (currentView !== 'month') return; 
-      const swipeThreshold = 50;
-      if (touchStartX - touchEndX > swipeThreshold) { nextPeriod(); } 
-      else if (touchEndX - touchStartX > swipeThreshold) { prevPeriod(); }
-  }
-
-  let isScrolling = false;
-  mainApp.addEventListener('wheel', e => {
-      if(e.target.closest('.bottom-bar') || e.target.closest('.modal') || e.target.closest('.year-picker')) return;
-      if (currentView !== 'month') return;
-      if (!isScrolling) {
-          if (e.deltaX > 30 || e.deltaY > 30) {
-              nextPeriod(); isScrolling = true; setTimeout(() => isScrolling = false, 500); 
-          } else if (e.deltaX < -30 || e.deltaY < -30) {
-              prevPeriod(); isScrolling = true; setTimeout(() => isScrolling = false, 500);
-          }
-      }
-  }, {passive: true});
-
-  function openConfig() { document.getElementById('config-modal').classList.add('active'); renderShiftsList(); }
-  function closeConfig() { document.getElementById('config-modal').classList.remove('active'); resetForm(); }
-  
-  function renderShiftsList() {
-      const list = document.getElementById('shifts-list');
-      list.innerHTML = '';
-      shifts.forEach(s => {
-          const d = document.createElement('div');
-          d.className = 'shift-list-item';
-          const abbr = s.emoji || s.name.substring(0,2).toUpperCase();
-          d.innerHTML = `
-            <div class="shift-list-header">
-                <div style="display:flex; align-items:center; gap:10px;">
-                  <div style="width:30px; height:30px; background:${s.color}; border-radius:6px; display:flex; justify-content:center; align-items:center; font-size:14px; color:white; font-weight:bold;">${abbr}</div>
-                  <strong>${s.name}</strong> 
-                  <span style="font-size:13px; color:var(--muted)">${s.timeStart ? '('+s.timeStart+'-'+s.timeEnd+')' : ''}</span>
-                </div>
-                <div class="shift-actions">
-                    <button class="btn-edit" onclick="editShift('${s.id}')">✏️</button>
-                    <button class="btn-delete" onclick="deleteShift('${s.id}')">✖</button>
-                </div>
-            </div>
-          `;
-          list.appendChild(d);
-      });
-  }
-
-  function editShift(id) {
-      const shift = shifts.find(s => s.id === id);
-      if (!shift) return;
-      document.getElementById('form-title').textContent = "Editar Turno";
-      document.getElementById('edit-shift-id').value = shift.id;
-      document.getElementById('new-shift-name').value = shift.name;
-      document.getElementById('new-shift-color').value = shift.color;
-      document.getElementById('new-shift-emoji').value = shift.emoji || '';
-      document.getElementById('new-shift-start').value = shift.timeStart || '';
-      document.getElementById('new-shift-end').value = shift.timeEnd || '';
-      document.getElementById('btn-cancel-edit').style.display = 'block';
-  }
-  
-  function resetForm() {
-      document.getElementById('form-title').textContent = "Añadir Nuevo Turno";
-      document.getElementById('edit-shift-id').value = "";
-      document.getElementById('new-shift-name').value = "";
-      document.getElementById('new-shift-color').value = "#4ade80";
-      document.getElementById('new-shift-emoji').value = "";
-      document.getElementById('new-shift-start').value = "";
-      document.getElementById('new-shift-end').value = "";
-      document.getElementById('btn-cancel-edit').style.display = 'none';
-  }
-
-  function saveShift() {
-    const idToEdit = document.getElementById('edit-shift-id').value;
-    const name = document.getElementById('new-shift-name').value.trim();
-    const color = document.getElementById('new-shift-color').value;
-    const emoji = document.getElementById('new-shift-emoji').value.trim();
-    const timeStart = document.getElementById('new-shift-start').value;
-    const timeEnd = document.getElementById('new-shift-end').value;
-
-    if (!name) return alert('Por favor, indica un nombre para el estado.');
-
-    if (idToEdit) {
-        const index = shifts.findIndex(s => s.id === idToEdit);
-        if (index !== -1) { shifts[index] = { id: idToEdit, name, color, emoji, timeStart, timeEnd }; }
-    } else {
-        shifts.push({ id: 's' + Date.now().toString(), name, color, emoji, timeStart, timeEnd });
-    }
-    
-    saveData(); resetForm(); renderShiftsList(); renderPalette(); setView(currentView); 
-  }
-
-  function deleteShift(id) {
-    if(confirm('¿Eliminar este turno permanentemente? Se borrará de los días asignados.')) {
-      shifts = shifts.filter(s => s.id !== id);
-      for (let date in assignedShifts) {
-         assignedShifts[date] = assignedShifts[date].filter(sId => sId !== id);
-         if (assignedShifts[date].length === 0) delete assignedShifts[date];
-      }
-      if (activeShiftId === id) activeShiftId = null;
-      saveData(); renderShiftsList(); renderPalette(); setView(currentView);
-    }
-  }
-
-  updateSeason();
-  updateHeader();
-  renderPalette();
-  
+  // INIT
+  getLocationAndWeather();
 </script>
 </body>
 </html>
