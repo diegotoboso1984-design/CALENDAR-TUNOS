@@ -139,23 +139,12 @@
   }
 
   .month-event-text {
-      font-size: 8px;
-      color: #1d4ed8;
-      background: rgba(59, 130, 246, 0.15);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      width: 100%;
-      text-align: left;
-      padding: 2px;
-      margin-top: 1px;
-      border-radius: 3px;
-      font-weight: bold;
+      font-size: 8px; color: #1d4ed8; background: rgba(59, 130, 246, 0.15);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      width: 100%; text-align: left; padding: 2px; margin-top: 1px;
+      border-radius: 3px; font-weight: bold;
   }
-  [data-theme="dark"] .month-event-text {
-      color: #93c5fd;
-      background: rgba(59, 130, 246, 0.25);
-  }
+  [data-theme="dark"] .month-event-text { color: #93c5fd; background: rgba(59, 130, 246, 0.25); }
 
   .mobile-text { display: none; }
 
@@ -232,6 +221,9 @@
   .event-card { padding: 12px; border-left: 4px solid #3b82f6; background: var(--bg-color); border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
   .event-card h4 { margin: 0 0 4px 0; font-size: 15px; }
   .event-card p { margin: 0; font-size: 13px; color: var(--muted); }
+
+  .btn-danger { background: #ef4444 !important; color: white !important; border: none !important; }
+  .btn-danger:hover { background: #dc2626 !important; }
 
   @media (max-width: 600px) {
     .calendar-header { grid-template-columns: 20px repeat(7, minmax(0, 1fr)); font-size: 12px; }
@@ -342,10 +334,13 @@
 <div class="modal" id="config-modal" onclick="if(event.target===this) closeConfig()">
   <div class="modal-content">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <h2 style="margin:0;">Turnos</h2>
+        <h2 style="margin:0;">Configuración general</h2>
         <button onclick="closeConfig()" style="background:var(--bg-color); border:none; width:36px; height:36px; border-radius:50%; font-size:16px;">✖</button>
     </div>
     
+    <button onclick="clearCalendar()" class="btn-danger" style="width: 100%; padding: 15px; font-size: 16px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);">🗑️ LIMPIAR CALENDARIO (Borrar todo)</button>
+
+    <h3 style="font-size: 16px; margin-bottom: 15px;">Tus Turnos</h3>
     <div id="shifts-list" style="margin-bottom: 20px; max-height: 30vh; overflow-y: auto; padding-right:5px;"></div>
     
     <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
@@ -464,14 +459,12 @@
     const bar = document.getElementById('palette-bar');
     bar.innerHTML = '';
     
-    // Botón Ver Día / Deseleccionar
     const eraser = document.createElement('div');
     eraser.className = `palette-item ${activeShiftId === null ? 'active' : ''}`;
     eraser.onclick = () => { activeShiftId = null; renderPalette(); };
     eraser.innerHTML = `<div class="palette-icon" style="background: #333; color: white;">🔍</div><div class="palette-name">Ver Día</div>`;
     bar.appendChild(eraser);
     
-    // Botón Borrar Turno
     const delTurno = document.createElement('div');
     delTurno.className = `palette-item ${activeShiftId === 'eraser' ? 'active' : ''}`;
     delTurno.onclick = () => { activeShiftId = 'eraser'; renderPalette(); };
@@ -565,7 +558,6 @@
 
       dayEl.innerHTML = `<div style="width:100%;"><div class="date-num">${d.getDate()}</div></div>`;
 
-      // Render Shifts first
       if (assignedShifts[dateStr]) {
         assignedShifts[dateStr].forEach(sId => {
            const s = shifts.find(x => x.id === sId);
@@ -579,8 +571,7 @@
            }
         });
       }
-
-      // Render Events text
+      
       if (calEvents[dateStr] && calEvents[dateStr].length > 0) {
           calEvents[dateStr].forEach(ev => {
               const evText = document.createElement('div');
@@ -594,7 +585,6 @@
     }
   }
 
-  // --- LÓGICA MODAL DÍA ---
   function openDayModal() {
       document.getElementById('day-modal').classList.add('active');
       renderDayModalContent();
@@ -708,36 +698,6 @@
       setTimeout(() => scrollToYear(currentDate.getFullYear(), false), 50);
   }
 
-  function addEvent() {
-      const dateStr = formatDateStr(selectedDay);
-      const title = document.getElementById('ev-title').value.trim();
-      const time = document.getElementById('ev-time').value;
-      const alarmOffset = parseFloat(document.getElementById('ev-alarm').value);
-      if (!title) return alert("El título del evento es obligatorio.");
-      if (!calEvents[dateStr]) calEvents[dateStr] = [];
-      calEvents[dateStr].push({ id: Date.now(), title, time, alarmOffset, notified: false });
-      saveData();
-      
-      if (alarmOffset > 0 && "Notification" in window && Notification.permission !== "granted") {
-          Notification.requestPermission();
-      }
-      document.getElementById('ev-title').value = ''; document.getElementById('ev-time').value = ''; document.getElementById('ev-alarm').value = '0';
-      
-      renderDayModalContent();
-      renderCalendar();
-  }
-
-  function deleteEvent(dateStr, id) {
-      if(confirm('¿Eliminar esta cita?')) {
-          calEvents[dateStr] = calEvents[dateStr].filter(e => e.id !== id);
-          if (calEvents[dateStr].length === 0) delete calEvents[dateStr];
-          saveData(); 
-          renderDayModalContent();
-          renderCalendar();
-      }
-  }
-
-  // --- IMPORT / EXPORT ICS ---
   function exportICS() {
       let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//TurnosApp//ES\n";
 
@@ -829,7 +789,6 @@
                           time = `${hh}:${mm}`;
                       }
                       
-                      // Skip internal shifts format from re-importing as generic events
                       if (summary.startsWith("[Turno]")) continue;
 
                       const dateStr = `${year}-${month}-${day}`;
@@ -854,37 +813,45 @@
       event.target.value = ''; 
   }
 
-  setInterval(() => {
-      if ("Notification" in window && Notification.permission === "granted") {
-          const now = new Date();
-          const todayStr = formatDateStr(now);
-          if(calEvents[todayStr]) {
-              let updated = false;
-              calEvents[todayStr].forEach(ev => {
-                  if(ev.alarmOffset > 0 && !ev.notified && ev.time) {
-                      const [h, m] = ev.time.split(':');
-                      let eventTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
-                      let offsetMinutes = ev.alarmOffset === 0.01 ? 0 : ev.alarmOffset;
-                      let alarmTime = new Date(eventTime.getTime() - offsetMinutes * 60000);
-                      
-                      if (now >= alarmTime && now < eventTime) {
-                          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                              navigator.serviceWorker.ready.then(reg => {
-                                  reg.showNotification("Aviso de Calendario", {
-                                    body: `Cita: ${ev.title} a las ${ev.time}`
-                                  });
-                              });
-                          } else {
-                              new Notification("Aviso de Calendario", { body: `Cita: ${ev.title} a las ${ev.time}` });
-                          }
-                          ev.notified = true; updated = true;
-                      }
-                  }
-              });
-              if(updated) saveData();
-          }
+  function addEvent() {
+      const dateStr = formatDateStr(selectedDay);
+      const title = document.getElementById('ev-title').value.trim();
+      const time = document.getElementById('ev-time').value;
+      const alarmOffset = parseFloat(document.getElementById('ev-alarm').value);
+      if (!title) return alert("El título del evento es obligatorio.");
+      if (!calEvents[dateStr]) calEvents[dateStr] = [];
+      calEvents[dateStr].push({ id: Date.now(), title, time, alarmOffset, notified: false });
+      saveData();
+      
+      if (alarmOffset > 0 && "Notification" in window && Notification.permission !== "granted") {
+          Notification.requestPermission();
       }
-  }, 30000);
+      document.getElementById('ev-title').value = ''; document.getElementById('ev-time').value = ''; document.getElementById('ev-alarm').value = '0';
+      
+      renderDayModalContent();
+      renderCalendar();
+  }
+
+  function deleteEvent(dateStr, id) {
+      if(confirm('¿Eliminar esta cita?')) {
+          calEvents[dateStr] = calEvents[dateStr].filter(e => e.id !== id);
+          if (calEvents[dateStr].length === 0) delete calEvents[dateStr];
+          saveData(); 
+          renderDayModalContent();
+          renderCalendar();
+      }
+  }
+
+  function clearCalendar() {
+      if(confirm('⚠️ ¿Estás seguro de que quieres BORRAR TODOS los turnos y eventos asignados en tu calendario? Esta acción no se puede deshacer.')) {
+          assignedShifts = {};
+          calEvents = {};
+          saveData();
+          renderCalendar();
+          closeConfig();
+          alert("Calendario limpiado correctamente.");
+      }
+  }
 
   function toggleShiftOnDate(dateStr) {
     if (!activeShiftId) return;
@@ -902,7 +869,6 @@
     saveData();
     if(currentView === 'month') renderCalendar();
     
-    // Si el modal está abierto, actualizarlo también
     if (document.getElementById('day-modal').classList.contains('active')) {
         renderDayModalContent();
     }
@@ -1028,7 +994,7 @@
   updateSeason();
   updateHeader();
   renderPalette();
-  renderCalendar();
+  
 </script>
 </body>
 </html>
@@ -1173,23 +1139,12 @@
   }
 
   .month-event-text {
-      font-size: 8px;
-      color: #1d4ed8;
-      background: rgba(59, 130, 246, 0.15);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      width: 100%;
-      text-align: left;
-      padding: 2px;
-      margin-top: 1px;
-      border-radius: 3px;
-      font-weight: bold;
+      font-size: 8px; color: #1d4ed8; background: rgba(59, 130, 246, 0.15);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      width: 100%; text-align: left; padding: 2px; margin-top: 1px;
+      border-radius: 3px; font-weight: bold;
   }
-  [data-theme="dark"] .month-event-text {
-      color: #93c5fd;
-      background: rgba(59, 130, 246, 0.25);
-  }
+  [data-theme="dark"] .month-event-text { color: #93c5fd; background: rgba(59, 130, 246, 0.25); }
 
   .mobile-text { display: none; }
 
@@ -1266,6 +1221,9 @@
   .event-card { padding: 12px; border-left: 4px solid #3b82f6; background: var(--bg-color); border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
   .event-card h4 { margin: 0 0 4px 0; font-size: 15px; }
   .event-card p { margin: 0; font-size: 13px; color: var(--muted); }
+
+  .btn-danger { background: #ef4444 !important; color: white !important; border: none !important; }
+  .btn-danger:hover { background: #dc2626 !important; }
 
   @media (max-width: 600px) {
     .calendar-header { grid-template-columns: 20px repeat(7, minmax(0, 1fr)); font-size: 12px; }
@@ -1376,10 +1334,13 @@
 <div class="modal" id="config-modal" onclick="if(event.target===this) closeConfig()">
   <div class="modal-content">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <h2 style="margin:0;">Turnos</h2>
+        <h2 style="margin:0;">Configuración general</h2>
         <button onclick="closeConfig()" style="background:var(--bg-color); border:none; width:36px; height:36px; border-radius:50%; font-size:16px;">✖</button>
     </div>
     
+    <button onclick="clearCalendar()" class="btn-danger" style="width: 100%; padding: 15px; font-size: 16px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);">🗑️ LIMPIAR CALENDARIO (Borrar todo)</button>
+
+    <h3 style="font-size: 16px; margin-bottom: 15px;">Tus Turnos</h3>
     <div id="shifts-list" style="margin-bottom: 20px; max-height: 30vh; overflow-y: auto; padding-right:5px;"></div>
     
     <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
@@ -1498,14 +1459,12 @@
     const bar = document.getElementById('palette-bar');
     bar.innerHTML = '';
     
-    // Botón Ver Día / Deseleccionar
     const eraser = document.createElement('div');
     eraser.className = `palette-item ${activeShiftId === null ? 'active' : ''}`;
     eraser.onclick = () => { activeShiftId = null; renderPalette(); };
     eraser.innerHTML = `<div class="palette-icon" style="background: #333; color: white;">🔍</div><div class="palette-name">Ver Día</div>`;
     bar.appendChild(eraser);
     
-    // Botón Borrar Turno
     const delTurno = document.createElement('div');
     delTurno.className = `palette-item ${activeShiftId === 'eraser' ? 'active' : ''}`;
     delTurno.onclick = () => { activeShiftId = 'eraser'; renderPalette(); };
@@ -1599,7 +1558,6 @@
 
       dayEl.innerHTML = `<div style="width:100%;"><div class="date-num">${d.getDate()}</div></div>`;
 
-      // Render Shifts first
       if (assignedShifts[dateStr]) {
         assignedShifts[dateStr].forEach(sId => {
            const s = shifts.find(x => x.id === sId);
@@ -1613,8 +1571,7 @@
            }
         });
       }
-
-      // Render Events text
+      
       if (calEvents[dateStr] && calEvents[dateStr].length > 0) {
           calEvents[dateStr].forEach(ev => {
               const evText = document.createElement('div');
@@ -1628,7 +1585,6 @@
     }
   }
 
-  // --- LÓGICA MODAL DÍA ---
   function openDayModal() {
       document.getElementById('day-modal').classList.add('active');
       renderDayModalContent();
@@ -1742,36 +1698,6 @@
       setTimeout(() => scrollToYear(currentDate.getFullYear(), false), 50);
   }
 
-  function addEvent() {
-      const dateStr = formatDateStr(selectedDay);
-      const title = document.getElementById('ev-title').value.trim();
-      const time = document.getElementById('ev-time').value;
-      const alarmOffset = parseFloat(document.getElementById('ev-alarm').value);
-      if (!title) return alert("El título del evento es obligatorio.");
-      if (!calEvents[dateStr]) calEvents[dateStr] = [];
-      calEvents[dateStr].push({ id: Date.now(), title, time, alarmOffset, notified: false });
-      saveData();
-      
-      if (alarmOffset > 0 && "Notification" in window && Notification.permission !== "granted") {
-          Notification.requestPermission();
-      }
-      document.getElementById('ev-title').value = ''; document.getElementById('ev-time').value = ''; document.getElementById('ev-alarm').value = '0';
-      
-      renderDayModalContent();
-      renderCalendar();
-  }
-
-  function deleteEvent(dateStr, id) {
-      if(confirm('¿Eliminar esta cita?')) {
-          calEvents[dateStr] = calEvents[dateStr].filter(e => e.id !== id);
-          if (calEvents[dateStr].length === 0) delete calEvents[dateStr];
-          saveData(); 
-          renderDayModalContent();
-          renderCalendar();
-      }
-  }
-
-  // --- IMPORT / EXPORT ICS ---
   function exportICS() {
       let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//TurnosApp//ES\n";
 
@@ -1863,7 +1789,6 @@
                           time = `${hh}:${mm}`;
                       }
                       
-                      // Skip internal shifts format from re-importing as generic events
                       if (summary.startsWith("[Turno]")) continue;
 
                       const dateStr = `${year}-${month}-${day}`;
@@ -1888,37 +1813,45 @@
       event.target.value = ''; 
   }
 
-  setInterval(() => {
-      if ("Notification" in window && Notification.permission === "granted") {
-          const now = new Date();
-          const todayStr = formatDateStr(now);
-          if(calEvents[todayStr]) {
-              let updated = false;
-              calEvents[todayStr].forEach(ev => {
-                  if(ev.alarmOffset > 0 && !ev.notified && ev.time) {
-                      const [h, m] = ev.time.split(':');
-                      let eventTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
-                      let offsetMinutes = ev.alarmOffset === 0.01 ? 0 : ev.alarmOffset;
-                      let alarmTime = new Date(eventTime.getTime() - offsetMinutes * 60000);
-                      
-                      if (now >= alarmTime && now < eventTime) {
-                          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                              navigator.serviceWorker.ready.then(reg => {
-                                  reg.showNotification("Aviso de Calendario", {
-                                    body: `Cita: ${ev.title} a las ${ev.time}`
-                                  });
-                              });
-                          } else {
-                              new Notification("Aviso de Calendario", { body: `Cita: ${ev.title} a las ${ev.time}` });
-                          }
-                          ev.notified = true; updated = true;
-                      }
-                  }
-              });
-              if(updated) saveData();
-          }
+  function addEvent() {
+      const dateStr = formatDateStr(selectedDay);
+      const title = document.getElementById('ev-title').value.trim();
+      const time = document.getElementById('ev-time').value;
+      const alarmOffset = parseFloat(document.getElementById('ev-alarm').value);
+      if (!title) return alert("El título del evento es obligatorio.");
+      if (!calEvents[dateStr]) calEvents[dateStr] = [];
+      calEvents[dateStr].push({ id: Date.now(), title, time, alarmOffset, notified: false });
+      saveData();
+      
+      if (alarmOffset > 0 && "Notification" in window && Notification.permission !== "granted") {
+          Notification.requestPermission();
       }
-  }, 30000);
+      document.getElementById('ev-title').value = ''; document.getElementById('ev-time').value = ''; document.getElementById('ev-alarm').value = '0';
+      
+      renderDayModalContent();
+      renderCalendar();
+  }
+
+  function deleteEvent(dateStr, id) {
+      if(confirm('¿Eliminar esta cita?')) {
+          calEvents[dateStr] = calEvents[dateStr].filter(e => e.id !== id);
+          if (calEvents[dateStr].length === 0) delete calEvents[dateStr];
+          saveData(); 
+          renderDayModalContent();
+          renderCalendar();
+      }
+  }
+
+  function clearCalendar() {
+      if(confirm('⚠️ ¿Estás seguro de que quieres BORRAR TODOS los turnos y eventos asignados en tu calendario? Esta acción no se puede deshacer.')) {
+          assignedShifts = {};
+          calEvents = {};
+          saveData();
+          renderCalendar();
+          closeConfig();
+          alert("Calendario limpiado correctamente.");
+      }
+  }
 
   function toggleShiftOnDate(dateStr) {
     if (!activeShiftId) return;
@@ -1936,7 +1869,6 @@
     saveData();
     if(currentView === 'month') renderCalendar();
     
-    // Si el modal está abierto, actualizarlo también
     if (document.getElementById('day-modal').classList.contains('active')) {
         renderDayModalContent();
     }
@@ -2062,7 +1994,7 @@
   updateSeason();
   updateHeader();
   renderPalette();
-  renderCalendar();
+  
 </script>
 </body>
 </html>
